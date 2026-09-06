@@ -1,0 +1,42 @@
+# NGYT: build debug APK on every push to main and upload it as an artifact.
+name: Build Debug APK
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the repository.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up JDK 17 (required by AGP 8.x / Gradle 8.x).
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      # 3. Set up the Android SDK (platform, tools, build-tools).
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 4. Make the Gradle wrapper executable.
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 5. Build the debug APK.
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      # 6. Upload the APK as a workflow artifact.
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NGYT-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
