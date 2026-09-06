@@ -1,5 +1,5 @@
 // Top-level build file for the NGYT project.
 // Defines common plugin versions. App module applies the versions it needs.
 plugins {
-    id("com.android.application") version "8.5.2" apply false
+    id 'com.android.application' version '8.5.2' apply false
 }
