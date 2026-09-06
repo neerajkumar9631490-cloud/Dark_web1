@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" width="180" alt="NgYT Logo">
+  <img src="app/src/main/res/drawable/logo.png" width="180" alt="NgYT Logo">
 </p>
 
 <h1 align="center">NgYT</h1>
