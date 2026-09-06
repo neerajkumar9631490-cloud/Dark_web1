@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
@@ -12,6 +13,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,6 +39,12 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     /** Cached ad-block JS read once from assets. */
     private String adBlockJs = "";
+    /** HTML5 full-screen video view (YouTube full-screen button), null when not in use. */
+    private View customView;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private int originalSystemUiVisibility;
+    /** Kept as a field so back-press can exit full-screen video. */
+    private WebChromeClient chromeClient;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
@@ -116,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        view.setWebChromeClient(new WebChromeClient() {
+        chromeClient = new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView w, int newProgress) {
                 // YouTube is a SPA: re-inject while navigating between videos.
@@ -124,7 +132,49 @@ public class MainActivity extends AppCompatActivity {
                     injectAdBlock(w);
                 }
             }
-        });
+
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                // Called when the YouTube full-screen button is tapped.
+                // Host the video view on top of the window in immersive mode.
+                if (customView != null) {
+                    callback.onCustomViewHidden();
+                    return;
+                }
+                customView = view;
+                customViewCallback = callback;
+                originalSystemUiVisibility =
+                        getWindow().getDecorView().getSystemUiVisibility();
+                FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+                decor.addView(customView, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+                getWindow().getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                // Called on video exit / back-press: remove the video view.
+                if (customView == null) {
+                    return;
+                }
+                FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+                decor.removeView(customView);
+                customView = null;
+                getWindow().getDecorView().setSystemUiVisibility(originalSystemUiVisibility);
+                if (customViewCallback != null) {
+                    customViewCallback.onCustomViewHidden();
+                    customViewCallback = null;
+                }
+            }
+        };
+        view.setWebChromeClient(chromeClient);
     }
 
     /**
@@ -173,8 +223,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // Back navigates WebView history first, exits only when empty.
-        if (webView != null && webView.canGoBack()) {
+        // Order: exit full-screen video -> WebView history -> exit app.
+        if (customView != null && chromeClient != null) {
+            chromeClient.onHideCustomView();
+        } else if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {
             super.onBackPressed();
@@ -183,6 +235,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (customView != null && chromeClient != null) {
+            chromeClient.onHideCustomView();
+        }
         if (webView != null) {
             webView.destroy();
             webView = null;
