@@ -14,8 +14,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
@@ -70,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webview);
         configureWebView(webView);
+
+        // About overlay button: opens the NGYT info dialog.
+        ImageButton aboutButton = findViewById(R.id.btn_about);
+        aboutButton.setOnClickListener(v -> showAboutDialog());
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
@@ -192,6 +198,17 @@ public class MainActivity extends AppCompatActivity {
             // noinspection deprecation
             view.loadUrl("javascript:" + adBlockJs);
         }
+    }
+
+    /**
+     * Shows the About dialog with the app name, creator and a short description.
+     */
+    private void showAboutDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.app_name)
+                .setMessage(R.string.about_text)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     /** Reads a text file from src/main/assets into a String. */

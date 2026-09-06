@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    NGYT single layout: a full-screen WebView. No other UI by design.
+    NGYT layout: full-screen WebView with a floating About button overlay.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -11,5 +11,20 @@
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- About button: floats above the WebView, white icon on a dark circle
+         like YouTube's bottom-nav icons. Raised above YouTube's own bottom
+         bar so it never covers it. -->
+    <ImageButton
+        android:id="@+id/btn_about"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
+        android:background="@drawable/bg_about_button"
+        android:contentDescription="@string/about_button_desc"
+        android:padding="12dp"
+        android:src="@drawable/ic_info" />
 
 </FrameLayout>

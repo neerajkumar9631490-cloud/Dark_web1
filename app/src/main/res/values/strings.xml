@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">NGYT</string>
+    <string name="about_button_desc">About NGYT</string>
+    <string name="about_text">Created by Neeraj.\n\nNGYT loads YouTube in a clean full-screen view and blocks video ads, banners and overlays right on your device — no extra features, just YouTube without the interruptions.</string>
 </resources>
